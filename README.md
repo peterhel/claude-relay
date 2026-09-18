@@ -32,7 +32,7 @@ every turn ──Stop hook──▶ detached digester ──▶ rolling brief (s
 ## Install
 
 ```bash
-git clone <this-repo> claude-relay
+git clone https://github.com/peterhel/claude-relay.git
 cd claude-relay
 ./install.sh
 ```
