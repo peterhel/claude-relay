@@ -18,6 +18,10 @@ RELAY_WINDOW=${RELAY_WINDOW:-200000}
 # Map-step model. Cheap on purpose: this is line reduction, not thinking.
 RELAY_MODEL=${RELAY_MODEL:-claude-haiku-4-5-20251001}
 
+# The claude binary. Hooks inherit the session's PATH, which is not always the
+# one you get over ssh/cron — set an absolute path here if `claude` is not found.
+RELAY_CLAUDE=${RELAY_CLAUDE:-claude}
+
 # Don't call the model every turn — let the transcript tail reach this many
 # bytes first. Lower = fresher brief, higher = cheaper.
 RELAY_MIN_BYTES=${RELAY_MIN_BYTES:-20000}

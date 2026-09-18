@@ -10,13 +10,26 @@ SETTINGS="$HOME/.claude/settings.json"
 
 # ---- prerequisites ---------------------------------------------------------
 missing=()
-for c in jq claude curl flock setsid; do
+for c in jq curl flock setsid; do
   command -v "$c" >/dev/null 2>&1 || missing+=("$c")
 done
 if [ ${#missing[@]} -gt 0 ]; then
   echo "relay: missing required commands: ${missing[*]}" >&2
-  echo "  jq, curl, flock, setsid: install via your package manager" >&2
-  echo "  claude: https://docs.claude.com/en/docs/claude-code" >&2
+  echo "  install them via your package manager (util-linux provides flock/setsid)" >&2
+  exit 1
+fi
+
+# `claude` is often outside a non-login PATH; find it and pin it if so.
+CLAUDE_BIN=$(command -v claude 2>/dev/null || true)
+if [ -z "$CLAUDE_BIN" ]; then
+  for p in "$HOME/.local/bin/claude" "$HOME/.claude/local/claude" \
+           /usr/local/bin/claude /opt/homebrew/bin/claude; do
+    [ -x "$p" ] && { CLAUDE_BIN="$p"; break; }
+  done
+fi
+if [ -z "$CLAUDE_BIN" ]; then
+  echo "relay: claude not found — install it first:" >&2
+  echo "  https://docs.claude.com/en/docs/claude-code" >&2
   exit 1
 fi
 
@@ -34,6 +47,13 @@ if [ ! -f "$DEST/config.local" ]; then
 # RELAY_NTFY=your-ntfy-topic
 EOF
   chmod 600 "$DEST/config.local"
+fi
+
+# pin the binary only when bare `claude` would not resolve
+if [ "$CLAUDE_BIN" != "$(command -v claude 2>/dev/null || true)" ] \
+   && ! grep -q '^RELAY_CLAUDE=' "$DEST/config.local"; then
+  printf 'RELAY_CLAUDE=%s\n' "$CLAUDE_BIN" >> "$DEST/config.local"
+  echo "relay: pinned RELAY_CLAUDE=$CLAUDE_BIN (not on PATH)"
 fi
 
 # ---- hook registration -----------------------------------------------------

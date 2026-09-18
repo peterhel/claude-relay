@@ -97,6 +97,7 @@ sourced *after* `config`, so the `${VAR:-default}` form there would be a no-op.
 | `RELAY_PCT` | `85` | Context % that triggers the handover flag + push |
 | `RELAY_WINDOW` | `200000` | Assumed window; self-corrects to 1M when it sees >190k |
 | `RELAY_MODEL` | `claude-haiku-4-5-20251001` | Model used for digesting |
+| `RELAY_CLAUDE` | `claude` | Path to the binary; the installer pins it when `claude` lives outside `PATH` |
 | `RELAY_MIN_BYTES` | `20000` | Don't call the model until this much new transcript exists |
 | `RELAY_BRIEF_CAP` | `60000` | Brief is re-compressed once it passes this size |
 | `RELAY_SEED_CAP` | `35000` | Max chars injected into the cleared session |

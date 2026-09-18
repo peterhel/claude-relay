@@ -74,7 +74,7 @@ fi
 [ "$bytes" -gt 200 ] || { printf '%s\n' "$total" > "$S/ckpt.$sid"; exit 0; }
 
 digest=$(cd "$HOME" && printf '%s' "$view" \
-         | RELAY_CHILD=1 timeout 180 claude -p --model "$RELAY_MODEL" \
+         | RELAY_CHILD=1 timeout 180 "$RELAY_CLAUDE" -p --model "$RELAY_MODEL" \
            "$RELAY_DIGEST_PROMPT" 2>/dev/null)
 
 if [ -n "$digest" ]; then
@@ -85,7 +85,7 @@ printf '%s\n' "$total" > "$S/ckpt.$sid"
 
 # ---- fold the brief if it has outgrown its cap -----------------------------
 if [ -f "$brief" ] && [ "$(wc -c < "$brief")" -gt "$RELAY_BRIEF_CAP" ]; then
-  folded=$(cd "$HOME" && RELAY_CHILD=1 timeout 240 claude -p --model "$RELAY_MODEL" \
+  folded=$(cd "$HOME" && RELAY_CHILD=1 timeout 240 "$RELAY_CLAUDE" -p --model "$RELAY_MODEL" \
     "$RELAY_FOLD_PROMPT" < "$brief" 2>/dev/null)
   if [ -n "$folded" ] && [ "${#folded}" -gt 500 ]; then
     { printf '# relay brief (folded %s)\n' "$(date '+%Y-%m-%d %H:%M')"
