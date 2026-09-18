@@ -29,6 +29,10 @@ RELAY_MIN_BYTES=${RELAY_MIN_BYTES:-20000}
 # The brief gets folded (re-compressed by the model) once it passes this size.
 RELAY_BRIEF_CAP=${RELAY_BRIEF_CAP:-60000}
 
+# State is per session, so finished sessions leave files behind. Anything
+# untouched for this many days is pruned.
+RELAY_KEEP_DAYS=${RELAY_KEEP_DAYS:-14}
+
 # ---- what gets injected at handover ----------------------------------------
 
 # Total chars of brief + verbatim tail handed to the cleared session.

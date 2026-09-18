@@ -22,13 +22,22 @@ tx="${1:-}"; cwd="${2:-}"; force="${3:-}"
 sid=$(basename "$tx" .jsonl)
 enc=$(printf '%s' "${cwd:-$HOME}" | sed 's#/#-#g')
 S="$R/state/$enc"; mkdir -p "$S"
-brief="$S/brief.md"
+# Per SESSION, not per project: several sessions can share a working directory,
+# and mixing their briefs hands the wrong history — and the wrong verbatim
+# tail — to whichever one you clear.
+brief="$S/brief.$sid.md"
 
 # one digest per session at a time; a slow model call must not stack up
 exec 9>"$S/.lock.$sid"
 flock -n 9 || exit 0
 
-printf '%s\n' "$tx" > "$S/last_tx"
+printf '%s\n' "$tx" > "$S/last_tx.$sid"
+
+# sessions end but their state does not; drop what has gone cold
+find "$S" -maxdepth 1 -type f -mtime +"${RELAY_KEEP_DAYS:-14}" \
+     \( -name 'brief.*.md'  -o -name 'ckpt.*'     -o -name 'last_tx.*' \
+     -o -name 'notified.*'  -o -name 'handover.*' -o -name '.lock.*' \) \
+     -delete 2>/dev/null || true
 
 # ---- context fullness (no model call — just the newest usage record) --------
 win=$(cat "$S/window" 2>/dev/null || echo "$RELAY_WINDOW")
@@ -47,7 +56,8 @@ if [ "$pct" -ge "$RELAY_PCT" ]; then
   force=1                                  # never hand over on a stale brief
   if [ ! -f "$S/notified.$sid" ]; then
     : > "$S/notified.$sid"
-    printf '%s\n' "$sid" > "$S/handover_ready"
+    printf '%s\n' "$sid" > "$S/handover.$sid"   # per session: clearing one
+                                                # must not clear the others' flags
     if [ -n "${RELAY_NTFY:-}" ]; then
       curl -fsS -m 10 -H "Title: Session ${pct}% full" \
         -d "$(basename "$cwd") — /clear now hands over via the brief (${cur}/${win} tokens)" \
