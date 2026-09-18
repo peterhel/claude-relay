@@ -1,0 +1,67 @@
+# relay — configuration. Every value is overridable from the environment, and
+# anything you put in `config.local` (git-ignored) wins over this file.
+
+# ---- when to hand over -----------------------------------------------------
+
+# Handover fires at this % of the context window. 85 rather than 90 on purpose:
+# the final tail digest has to finish BEFORE auto-compact (the backstop) kicks
+# in, and that costs a few seconds.
+RELAY_PCT=${RELAY_PCT:-85}
+
+# Assumed context window in tokens. Self-correcting: a 200k session can never
+# report more than ~200k, so the first sighting of >190k rewrites this to 1M for
+# that project. Set it explicitly if you already know.
+RELAY_WINDOW=${RELAY_WINDOW:-200000}
+
+# ---- cost control ----------------------------------------------------------
+
+# Map-step model. Cheap on purpose: this is line reduction, not thinking.
+RELAY_MODEL=${RELAY_MODEL:-claude-haiku-4-5-20251001}
+
+# Don't call the model every turn — let the transcript tail reach this many
+# bytes first. Lower = fresher brief, higher = cheaper.
+RELAY_MIN_BYTES=${RELAY_MIN_BYTES:-20000}
+
+# The brief gets folded (re-compressed by the model) once it passes this size.
+RELAY_BRIEF_CAP=${RELAY_BRIEF_CAP:-60000}
+
+# ---- what gets injected at handover ----------------------------------------
+
+# Total chars of brief + verbatim tail handed to the cleared session.
+RELAY_SEED_CAP=${RELAY_SEED_CAP:-35000}
+
+# Transcript lines kept VERBATIM. Compressed history is lossy exactly where it
+# hurts most — the thing you were in the middle of — so the recent tail is
+# passed through raw.
+RELAY_TAIL_LINES=${RELAY_TAIL_LINES:-160}
+
+# ---- notification ----------------------------------------------------------
+
+# ntfy.sh topic for the "session is full, hit /clear" push. Empty = no push.
+# Put this in config.local, not here — a topic name is a shared secret.
+RELAY_NTFY=${RELAY_NTFY:-}
+
+# ---- prompts (change these to work in your own language) -------------------
+
+RELAY_DIGEST_PROMPT=${RELAY_DIGEST_PROMPT:-"This is an excerpt from a Claude Code transcript (U: user, A: assistant, TOOL/RES: tool calls and their results).
+Write a compact log of what ACTUALLY happened, as a bullet list, max 15 bullets:
+- decisions taken, and why
+- files changed (full path) and what the change did
+- commands/tools run and WHAT RESULT they produced
+- open threads, TODOs, and what the user is waiting for
+- gotchas, and things that turned out not to work
+Distinguish what was claimed from what was demonstrated. No preamble, no closing
+remarks, no headings. Bullets only."}
+
+RELAY_FOLD_PROMPT=${RELAY_FOLD_PROMPT:-"This is a log of a long working session. Compress it to roughly half its
+length without losing: decisions taken, file paths, commands and their results,
+open threads. Merge repetition. Keep chronological order. Bullets only, no prose."}
+
+# NOTE: keep the literal string RELAY-BRIEF-V1 in this header. It is the
+# sentinel that stops the digester from summarising its own summaries.
+RELAY_SEED_HEADER=${RELAY_SEED_HEADER:-"RELAY-BRIEF-V1 — automatic handover. The previous session filled its context
+window and was cleared; what follows IS your memory of it. Continue the work,
+do not start over, and do not ask the user what happened."}
+
+RELAY_SEED_PAST=${RELAY_SEED_PAST:-"## What has been done (compressed log)"}
+RELAY_SEED_TAIL=${RELAY_SEED_TAIL:-"## Most recent turns, verbatim (U=user, A=you, TOOL/RES=tools)"}

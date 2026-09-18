@@ -1,0 +1,7 @@
+# secrets and machine-local settings
+relay/config.local
+
+# runtime artifacts, in case anyone runs relay from inside the checkout
+relay/state/
+relay/relay.log
+relay/OFF
